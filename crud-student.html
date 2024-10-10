@@ -1,0 +1,208 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script
+src="https://code.jquery.com/jquery-3.7.1.min.js"
+integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+crossorigin="anonymous"></script>
+</head>
+<body>
+<h1>Load Student Data</h1>
+<form id="formSearch" method="post">
+First Name:
+<br>
+<input type="text" class="searchInput" id="firstnameList" value="">
+<br>
+Last Name:
+<br>
+<input type="text" class="searchInput" id="lastnameList" value="">
+<br>
+Class Name:
+<br>
+<input type="text" class="searchInput" id="classnameList" value="">
+<br>
+<button type="submit">Search</button>
+<br>
+<br>
+</form>
+<table cellpadding="2" cellspacing="0" width="100%" id="dataTable" border="1">
+<thead>
+<tr>
+<th>First Name</th>
+<th>Last Name</th>
+<th>Class name</th>
+<th>Edit</th>
+<th>Delete</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+<br><br><br>
+<table cellpadding="2" cellspacing="0" width="100%" border="1">
+<tr>
+<td>
+<h1>Insert Data</h1>
+<form id="formAdd" method="post">
+First Name:
+<br>
+<input type="text" id="firstnameAdd" value="">
+<br>
+Last Name:
+<br>
+<input type="text" id="lastnameAdd" value="">
+<br>
+Class Name:
+<br>
+<input type="text" id="classnameAdd" value="">
+<br>
+<button type="submit">Add</button>
+</form>
+</td>
+<td>
+<h1>Update Data</h1>
+<form id="formUpdate" method="post">
+ID:
+<br>
+<input type="hidden" id="objectIDEdit" value="">
+<br>
+Firstname:
+<br>
+<input type="text" id="firstnameEdit" value="">
+<br>
+Classname:
+<br>
+<input type="text" id="classnameEdit" value="">
+<br>
+Lastname:
+<br>
+<input type="text" id="lastnameEdit" value="">
+<br>
+<button type="submit">Update</button>
+</form>
+</td>
+</tr>
+</table>
+<script>
+$(function() {
+loadData();
+$("#formSearch").on("submit",function(event){
+loadData();
+event.preventDefault();
+});
+$(".searchInput").keyup(function(){
+loadData();
+});
+$("#formAdd").on("submit",function(event){
+var form = $('#formUpdate')[0];
+var data = new FormData(form);
+data.append('firstname', $('#firstnameAdd').val());
+data.append('classname', $('#classnameAdd').val());
+data.append('lastname', $('#lastnameAdd').val());
+$.ajax({
+type: "POST",
+url: `http://localhost:8080/student/add`,
+data: data,
+dataType: 'json',
+processData: false,
+contentType: false,
+cache: false,
+success: function (data) {
+alert(data.message);
+loadData();
+},
+error: function (xhr) {
+alert(xhr.responseJSON.message);
+}
+});
+event.preventDefault();
+});
+$("#formUpdate").on("submit",function(event){
+var form = $('#formUpdate')[0];
+var data = new FormData(form);
+data.append('firstname', $('#firstnameEdit').val());
+data.append('classname', $('#classnameEdit').val());
+data.append('lastname', $('#lastnameEdit').val());
+data.append('object_id', $('#objectIDEdit').val());
+$.ajax({
+type: "POST",
+url: `http://localhost:8080/student/single_update`,
+data: data,
+dataType: 'json',
+processData: false,
+contentType: false,
+cache: false,
+success: function (data) {
+alert(data.message);
+loadData();
+},
+error: function (xhr) {
+alert(xhr.responseJSON.message);
+}
+});
+event.preventDefault();
+});
+$('#dataTable tbody').on("click", ".editLink", function() {
+var cid = $(this).attr('id');
+$.ajax({
+type: "GET",
+url: `http://localhost:8080/student/get_row/` + cid,
+dataType: 'json',
+cache: false,
+success: function (data) {
+$('#objectIDEdit').val(data.id);
+$('#firstnameEdit').val(data.firstname);
+$('#classnameEdit').val(data.classname);
+$('#lastnameEdit').val(data.lastname);
+}
+});
+});
+$('#dataTable tbody').on("click", ".deleteLink", function() {
+var cid = $(this).attr('id');
+$.ajax({
+type: "DELETE",
+url: `http://localhost:8080/student/single_delete/`+cid,
+dataType: 'json',
+cache: false,
+success: function (data) {
+loadData();
+}
+});
+});
+})
+function loadData(){
+let s ="";
+let data = {
+"firstname": $('#firstnameList').val(),
+"lastname": $('#lastnameList').val(),
+"classname": $('#classnameList').val()
+}
+$.ajax({
+type: "GET",
+url: `http://localhost:8080/student/list`,
+data: data,
+dataType: 'json',
+cache: false,
+success: function (data) {
+$.each(data, function(i, item) {
+s += `<tr>
+<td>` + data[i].firstname + `</td>
+<td>` + data[i].lastname + `</td>
+<td>` + data[i].classname + `</td>
+<td><div class="editLink" style="cursor:pointer;" id=` +
+data[i].id + `>` + `edit </div></td>
+<td><div class="deleteLink" style="cursor:pointer;" id=` +
+data[i].id + `>` + `delete </div></td>
+</tr>`;
+});
+$("#dataTable tbody").html(s);
+},
+error: function (xhr) {
+//console.log(xhr);
+//alert(xhr.responseJSON.message);
+}
+});
+}
+</script>
+</body>
+</html>

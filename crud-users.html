@@ -1,0 +1,203 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script
+src="https://code.jquery.com/jquery-3.7.1.min.js"
+integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+crossorigin="anonymous"></script>
+</head>
+<body>
+<h1>Load Users Data</h1>
+<form id="formSearch" method="post">
+Username:
+<br>
+<input type="text" class="searchInput" id="usernameList" value="">
+<br>
+Role:
+<br>
+<input type="text" class="searchInput" id="roleList" value="">
+<br>
+<button type="submit">Search</button>
+<br>
+<br>
+</form>
+<table cellpadding="2" cellspacing="0" width="100%" id="dataTable" border="1">
+<thead>
+<tr>
+<th>User Name</th>
+<th>Password</th>
+<th>Role</th>
+<th>Edit</th>
+<th>Delete</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+<br><br><br>
+<table cellpadding="2" cellspacing="0" width="100%" border="1">
+<tr>
+<td>
+<h1>Insert Data</h1>
+<form id="formAdd" method="post">
+Username:
+<br>
+<input type="text" id="usernameAdd" value="">
+<br>
+Password:
+<br>
+<input type="text" id="passwordAdd" value="">
+<br>
+Role:
+<br>
+<input type="text" id="roleAdd" value="">
+<br>
+<button type="submit">Add</button>
+</form>
+</td>
+<td>
+<h1>Update Data</h1>
+<form id="formUpdate" method="post">
+ID:
+<br>
+<input type="hidden" id="objectIDEdit" value="">
+<br>
+Username:
+<br>
+<input type="text" id="usernameEdit" value="">
+<br>
+Password:
+<br>
+<input type="text" id="passwordEdit" value="">
+<br>
+Role:
+<br>
+<input type="text" id="roleEdit" value="">
+<br>
+<button type="submit">Update</button>
+</form>
+</td>
+</tr>
+</table>
+<script>
+$(function() {
+loadData();
+$("#formSearch").on("submit",function(event){
+loadData();
+event.preventDefault();
+});
+$(".searchInput").keyup(function(){
+loadData();
+});
+$("#formAdd").on("submit",function(event){
+var form = $('#formUpdate')[0];
+var data = new FormData(form);
+data.append('username', $('#usernameAdd').val());
+data.append('password', $('#passwordAdd').val());
+data.append('role', $('#roleAdd').val());
+$.ajax({
+type: "POST",
+url: `http://localhost:8080/users/add`,
+data: data,
+dataType: 'json',
+processData: false,
+contentType: false,
+cache: false,
+success: function (data) {
+alert(data.message);
+loadData();
+},
+error: function (xhr) {
+alert(xhr.responseJSON.message);
+}
+});
+event.preventDefault();
+});
+$("#formUpdate").on("submit",function(event){
+var form = $('#formUpdate')[0];
+var data = new FormData(form);
+data.append('username', $('#usernameEdit').val());
+data.append('password', $('#passwordEdit').val());
+data.append('role', $('#roleEdit').val());
+data.append('object_id', $('#objectIDEdit').val());
+$.ajax({
+type: "POST",
+url: `http://localhost:8080/users/single_update`,
+data: data,
+dataType: 'json',
+processData: false,
+contentType: false,
+cache: false,
+success: function (data) {
+alert(data.message);
+loadData();
+},
+error: function (xhr) {
+alert(xhr.responseJSON.message);
+}
+});
+event.preventDefault();
+});
+$('#dataTable tbody').on("click", ".editLink", function() {
+var cid = $(this).attr('id');
+$.ajax({
+type: "GET",
+url: `http://localhost:8080/users/get_row/` + cid,
+dataType: 'json',
+cache: false,
+success: function (data) {
+$('#objectIDEdit').val(data.id);
+$('#usernameEdit').val(data.username);
+$('#passwordEdit').val(data.password);
+$('#roleEdit').val(data.role);
+}
+});
+});
+$('#dataTable tbody').on("click", ".deleteLink", function() {
+var cid = $(this).attr('id');
+$.ajax({
+type: "DELETE",
+url: `http://localhost:8080/users/single_delete/`+cid,
+dataType: 'json',
+cache: false,
+success: function (data) {
+loadData();
+}
+});
+});
+})
+function loadData(){
+let s ="";
+let data = {
+"username": $('#usernameList').val(),
+"role": $('#roleList').val()
+}
+$.ajax({
+type: "GET",
+url: `http://localhost:8080/users/list`,
+data: data,
+dataType: 'json',
+cache: false,
+success: function (data) {
+$.each(data, function(i, item) {
+s += `<tr>
+<td>` + data[i].username + `</td>
+<td>` + data[i].password + `</td>
+<td>` + data[i].role + `</td>
+<td><div class="editLink" style="cursor:pointer;" id=` +
+data[i].id + `>` + `edit </div></td>
+<td><div class="deleteLink" style="cursor:pointer;" id=` +
+data[i].id + `>` + `delete </div></td>
+</tr>`;
+});
+$("#dataTable tbody").html(s);
+},
+error: function (xhr) {
+//console.log(xhr);
+//alert(xhr.responseJSON.message);
+}
+});
+}
+</script>
+</body>
+</html>
